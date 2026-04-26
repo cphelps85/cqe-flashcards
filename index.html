@@ -67,6 +67,19 @@
     font-weight: 500;
     color: var(--amber);
   }
+  .plan-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    white-space: nowrap;
+    transition: border-color 0.2s;
+  }
+  .plan-link:hover { border-color: var(--accent); }
 
   /* ── HOME ── */
   .home-body { padding: 20px 20px 100px; }
@@ -529,7 +542,10 @@
 <div id="view-home" class="view active">
   <div class="app-header">
     <div class="app-title">CQE Flashcards</div>
-    <div class="streak-pill" id="streak-display">🔥 0 days</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <a class="plan-link" href="https://cphelps85.github.io/cqe-study-plan" target="_blank">📋 Study Plan</a>
+      <div class="streak-pill" id="streak-display">🔥 0 days</div>
+    </div>
   </div>
   <div class="home-body">
     <div class="mastery-block">
