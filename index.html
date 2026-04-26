@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CQE Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE8;
+    --border: #E2DDD6;
+    --accent: #4A6741;
+    --accent-light: #D4E4D0;
+    --amber: #B07D3A;
+    --amber-light: #F5E6CC;
+    --danger: #C0392B;
+    --danger-light: #F8E0DD;
+    --priority: #C4663A;
+    --text: #2D2416;
+    --muted: #8A7060;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── VIEWS ── */
+  .view { display: none; min-height: 100vh; }
+  .view.active { display: block; }
+
+  /* ── HEADER ── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .app-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+  .streak-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--amber-light);
+    border: 1px solid #E8C97A;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--amber);
+  }
+
+  /* ── HOME ── */
+  .home-body { padding: 20px 20px 100px; }
+
+  .mastery-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(45,36,22,0.05);
+  }
+  .mastery-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .mastery-label { font-size: 13px; color: var(--muted); }
+  .mastery-pct {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+  }
+  .progress-track {
+    height: 7px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--amber));
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  .mastery-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .weak-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .weak-btn:hover { background: #3d5836; }
+  .weak-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .module-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(45,36,22,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card:hover { border-color: #C8BFB4; box-shadow: 0 2px 8px rgba(45,36,22,0.08); }
+  .module-card.priority { border-color: rgba(196,102,58,0.3); }
+  .module-card.priority::before {
+    content: '⚠ PRIORITY';
+    position: absolute;
+    top: 0; right: 0;
+    background: var(--priority);
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 0 14px 0 8px;
+    letter-spacing: 0.5px;
+  }
+  .module-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .module-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .module-info { flex: 1; min-width: 0; }
+  .module-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .module-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .module-pct {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .module-pct.priority { color: var(--priority); }
+  .module-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .module-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.5s ease;
+  }
+  .module-bar-fill.priority { background: var(--priority); }
+  .module-card-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .card-count-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .status-pills { display: flex; gap: 5px; }
+  .status-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .status-pill.known { background: var(--accent-light); color: var(--accent); }
+  .status-pill.learning { background: var(--amber-light); color: var(--amber); }
+  .status-pill.needs { background: var(--danger-light); color: var(--danger); }
+
+  /* ── SESSION ── */
+  .session-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .session-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .session-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .session-body {
+    padding: 20px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Progress dots */
+  .progress-dots {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 320px;
+  }
+  .progress-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .progress-dot.known { background: var(--accent); }
+  .progress-dot.still_learning { background: var(--amber); }
+  .progress-dot.needs_work { background: var(--danger); }
+  .progress-dot.current { background: var(--text); }
+
+  /* Card */
+  .card-wrapper {
+    width: 100%;
+    max-width: 420px;
+    height: 300px;
+    perspective: 1200px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+    position: relative;
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 18px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(45,36,22,0.1);
+  }
+  .card-front {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .card-back {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    transform: rotateY(180deg);
+    justify-content: center;
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    align-self: flex-start;
+  }
+  .card-question {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(16px, 4vw, 19px);
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .card-answer {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .card-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+  }
+  .badge.new2022 { background: var(--amber-light); color: var(--amber); }
+  .badge.high { background: rgba(196,102,58,0.1); color: var(--priority); }
+  .badge.medium { background: var(--surface2); color: var(--muted); }
+
+  .tap-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+
+  /* Action buttons */
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 420px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .action-btns.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 14px 8px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    line-height: 1.2;
+  }
+  .action-btn:active { transform: scale(0.96); }
+  .action-btn .btn-icon { font-size: 18px; }
+  .btn-known { background: var(--accent-light); color: var(--accent); }
+  .btn-known:hover { background: #C4DCC0; }
+  .btn-learning { background: var(--amber-light); color: var(--amber); }
+  .btn-learning:hover { background: #EEDBBB; }
+  .btn-needs { background: var(--danger-light); color: var(--danger); }
+  .btn-needs:hover { background: #F2C8C5; }
+
+  /* Swipe overlay */
+  .swipe-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .swipe-overlay.known { background: rgba(74,103,65,0.15); }
+  .swipe-overlay.needs { background: rgba(192,57,43,0.15); }
+
+  /* ── SUMMARY ── */
+  .summary-body {
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+  }
+  .summary-icon { font-size: 56px; margin-bottom: 16px; }
+  .summary-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .summary-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+  .summary-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .summary-stat {
+    flex: 1;
+    border-radius: 14px;
+    padding: 16px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .summary-stat.known { background: var(--accent-light); }
+  .summary-stat.learning { background: var(--amber-light); }
+  .summary-stat.needs { background: var(--danger-light); }
+  .summary-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+  }
+  .summary-stat.known .summary-num { color: var(--accent); }
+  .summary-stat.learning .summary-num { color: var(--amber); }
+  .summary-stat.needs .summary-num { color: var(--danger); }
+  .summary-stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .summary-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; }
+  .summary-btn {
+    padding: 15px;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+  }
+  .summary-btn.primary { background: var(--accent); color: white; }
+  .summary-btn.primary:hover { background: #3d5836; }
+  .summary-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .summary-btn.secondary:hover { background: var(--border); }
+</style>
+</head>
+<body>
+
+<div id="swipe-overlay" class="swipe-overlay"></div>
+
+<!-- HOME -->
+<div id="view-home" class="view active">
+  <div class="app-header">
+    <div class="app-title">CQE Flashcards</div>
+    <div class="streak-pill" id="streak-display">🔥 0 days</div>
+  </div>
+  <div class="home-body">
+    <div class="mastery-block">
+      <div class="mastery-row">
+        <span class="mastery-label">Overall Mastery</span>
+        <span class="mastery-pct" id="overall-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="overall-bar" style="width:0%"></div>
+      </div>
+      <div class="mastery-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Known</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Still Learning</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>Needs Work</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div>Unseen</div>
+      </div>
+    </div>
+    <button class="weak-btn" id="weak-btn" onclick="startWeakSession()">
+      📚 Study Weak Cards
+    </button>
+    <div class="section-label">Modules</div>
+    <div class="module-grid" id="module-grid"></div>
+  </div>
+</div>
+
+<!-- SESSION -->
+<div id="view-session" class="view">
+  <div class="session-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="session-title" id="session-title">Study Session</div>
+    <div class="session-counter" id="session-counter">1 / 1</div>
+  </div>
+  <div class="session-body">
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="card-wrapper" id="card-wrapper" onclick="flipCard()">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front" id="card-front"></div>
+        <div class="card-face card-back" id="card-back"></div>
+      </div>
+    </div>
+    <div class="tap-hint" id="tap-hint">Tap card to reveal answer</div>
+    <div class="action-btns" id="action-btns">
+      <button class="action-btn btn-needs" onclick="markCard('needs_work')">
+        <span class="btn-icon">✗</span>Needs Work
+      </button>
+      <button class="action-btn btn-learning" onclick="markCard('still_learning')">
+        <span class="btn-icon">≈</span>Still Learning
+      </button>
+      <button class="action-btn btn-known" onclick="markCard('known')">
+        <span class="btn-icon">✓</span>Known
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="view-summary" class="view">
+  <div class="summary-body">
+    <div class="summary-icon" id="summary-icon">🎉</div>
+    <div class="summary-title">Session Complete!</div>
+    <div class="summary-sub" id="summary-sub">12 cards reviewed</div>
+    <div class="summary-stats">
+      <div class="summary-stat known">
+        <div class="summary-num" id="sum-known">0</div>
+        <div class="summary-stat-label">Known</div>
+      </div>
+      <div class="summary-stat learning">
+        <div class="summary-num" id="sum-learning">0</div>
+        <div class="summary-stat-label">Learning</div>
+      </div>
+      <div class="summary-stat needs">
+        <div class="summary-num" id="sum-needs">0</div>
+        <div class="summary-stat-label">Needs Work</div>
+      </div>
+    </div>
+    <div class="summary-btns">
+      <button class="summary-btn primary" id="study-again-btn" onclick="studyAgain()">Study Again</button>
+      <button class="summary-btn secondary" onclick="goHome()">Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// ── Firebase ─────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCb6j815XeY26SuRifvd7zYu8y2RjWzB0k",
+  authDomain: "chrissy-recipes-d9155.firebaseapp.com",
+  databaseURL: "https://chrissy-recipes-d9155-default-rtdb.firebaseio.com",
+  projectId: "chrissy-recipes-d9155",
+  storageBucket: "chrissy-recipes-d9155.firebasestorage.app",
+  messagingSenderId: "249792340286",
+  appId: "1:249792340286:web:b287af8301ce357cc3cc6f"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── Card Data ────────────────────────────────────────────────────────
+const MODULES = [
+  { id: 'm1', name: 'Management & Leadership',        domain: 'I',   examQ: 18, icon: '🏛️' },
+  { id: 'm2', name: 'The Quality System',             domain: 'II',  examQ: 18, icon: '📋' },
+  { id: 'm3', name: 'Product, Process & Service Design', domain: 'III', examQ: 23, icon: '🔧' },
+  { id: 'm4', name: 'Product & Process Control',      domain: 'IV',  examQ: 25, icon: '⚙️' },
+  { id: 'm5', name: 'Continuous Improvement',         domain: 'V',   examQ: 27, icon: '🔄' },
+  { id: 'm6', name: 'Quantitative Methods & Tools',   domain: 'VI',  examQ: 36, icon: '📊', priority: true },
+  { id: 'm7', name: 'Risk Management',                domain: 'VII', examQ: 21, icon: '⚠️' },
+];
+
+const CARDS = [
+  // Module 1
+  { id: 'c101', moduleId: 'm1', front: "What are Deming's 3 key contributions to quality?", back: "14 Points, PDCA cycle, System of Profound Knowledge. Core message: management owns the system, workers work within it.", priority: 'high', isNew2022: false },
+  { id: 'c102', moduleId: 'm1', front: "What is the RACI matrix?", back: "Responsibility Assignment Matrix: Responsible, Accountable, Consulted, Informed. Used to clarify roles in a process or project.", priority: 'high', isNew2022: true },
+  { id: 'c103', moduleId: 'm1', front: "What are the 4 categories of Cost of Quality?", back: "Prevention, Appraisal, Internal Failure, External Failure. Prevention + Appraisal = conformance costs. Internal + External Failure = nonconformance costs.", priority: 'high', isNew2022: false },
+  { id: 'c104', moduleId: 'm1', front: "What is Juran's Quality Trilogy?", back: "Quality Planning, Quality Control, Quality Improvement. Juran focused on the managerial dimension of quality.", priority: 'medium', isNew2022: false },
+  { id: 'c105', moduleId: 'm1', front: "What is benchmarking?", back: "Comparing processes or performance metrics to industry best practices or competitors to identify improvement opportunities.", priority: 'low', isNew2022: false },
+  // Module 2
+  { id: 'c201', moduleId: 'm2', front: "What is the purpose of a quality audit?", back: "To objectively evaluate whether quality activities comply with planned arrangements and whether these are implemented effectively. NOT a punitive tool.", priority: 'high', isNew2022: false },
+  { id: 'c202', moduleId: 'm2', front: "AS9100D vs ISO 9001 — key difference?", back: "AS9100D is ISO 9001 + aerospace-specific requirements: configuration management, product safety, risk management, FOD prevention, and first article inspection.", priority: 'high', isNew2022: false },
+  { id: 'c203', moduleId: 'm2', front: "What are the 3 types of quality audits?", back: "Product audit (conformance of product), Process audit (conformance of process), System audit (conformance of the QMS).", priority: 'high', isNew2022: false },
+  { id: 'c204', moduleId: 'm2', front: "Internal failure cost examples?", back: "Scrap, rework, re-inspection, downtime caused by defects — all occurring BEFORE delivery to customer.", priority: 'high', isNew2022: false },
+  { id: 'c205', moduleId: 'm2', front: "External failure cost examples?", back: "Warranty claims, returns, field repairs, customer complaints — occurring AFTER delivery. Most expensive category.", priority: 'high', isNew2022: false },
+  // Module 3
+  { id: 'c301', moduleId: 'm3', front: "Verification vs. Validation — what's the difference?", back: "Verification: Did we build it RIGHT? (meets specs). Validation: Did we build the RIGHT thing? (meets user needs). Frequently tested — know this cold.", priority: 'high', isNew2022: false },
+  { id: 'c302', moduleId: 'm3', front: "dFMEA vs pFMEA vs uFMEA?", back: "dFMEA = Design FMEA (design failures). pFMEA = Process FMEA (manufacturing failures). uFMEA = Use FMEA (user interaction failures). All new depth in 2022.", priority: 'high', isNew2022: true },
+  { id: 'c303', moduleId: 'm3', front: "What is RPN and how is it calculated?", back: "Risk Priority Number = Severity × Occurrence × Detection. Each scored 1-10. High severity should always be addressed regardless of RPN.", priority: 'high', isNew2022: false },
+  { id: 'c304', moduleId: 'm3', front: "What does CTQ stand for?", back: "Critical to Quality — a characteristic of a product or process that must meet a standard to satisfy customer requirements. Design input in 2022 BoK.", priority: 'high', isNew2022: true },
+  { id: 'c305', moduleId: 'm3', front: "What is Design for Six Sigma (DFSS)?", back: "A systematic methodology to design products and processes that meet Six Sigma quality levels from the start, rather than inspecting quality in later.", priority: 'medium', isNew2022: false },
+  // Module 4
+  { id: 'c401', moduleId: 'm4', front: "Cp vs Cpk — what's the difference?", back: "Cp measures potential capability (spread only). Cpk measures actual capability (spread + centering). A process can have high Cp but low Cpk if it's off-center.", priority: 'high', isNew2022: false },
+  { id: 'c402', moduleId: 'm4', front: "Cpk formula?", back: "Cpk = min[(USL - μ)/3σ, (μ - LSL)/3σ]. Minimum of the two calculations. Target ≥ 1.33 for most processes; ≥ 1.67 for critical characteristics.", priority: 'high', isNew2022: false },
+  { id: 'c403', moduleId: 'm4', front: "Control limits vs specification limits?", back: "Control limits are calculated from process data (±3σ). Spec limits are set by customer/engineering. They are NOT the same. Never plot spec limits on a control chart.", priority: 'high', isNew2022: false },
+  { id: 'c404', moduleId: 'm4', front: "What is Gage R&R?", back: "Gage Repeatability & Reproducibility — an MSA study that quantifies measurement system variation: equipment variation (repeatability) + appraiser variation (reproducibility).", priority: 'high', isNew2022: false },
+  { id: 'c405', moduleId: 'm4', front: "What is AQL?", back: "Acceptable Quality Level — the worst tolerable process average when a continuing series of lots is submitted for acceptance sampling.", priority: 'medium', isNew2022: false },
+  { id: 'c406', moduleId: 'm4', front: "What does a CMM measure?", back: "Coordinate Measuring Machine — measures the physical geometrical characteristics of an object using a probe. New in 2022 BoK.", priority: 'medium', isNew2022: true },
+  // Module 5
+  { id: 'c501', moduleId: 'm5', front: "8D Steps in order?", back: "D0: Prepare. D1: Team. D2: Problem. D3: Containment. D4: Root Cause. D5: Corrective Action. D6: Implement. D7: Prevent Recurrence. D8: Close & Recognize.", priority: 'high', isNew2022: false },
+  { id: 'c502', moduleId: 'm5', front: "What is D3 in 8D and why does it matter?", back: "D3 is Containment — stop the bleeding immediately while root cause is investigated. It is TEMPORARY. Skipping containment is a common real-world mistake.", priority: 'high', isNew2022: false },
+  { id: 'c503', moduleId: 'm5', front: "OEE formula?", back: "OEE = Availability × Performance × Quality. World-class OEE ≈ 85%. New depth in 2022 BoK.", priority: 'high', isNew2022: true },
+  { id: 'c504', moduleId: 'm5', front: "Corrective action vs preventive action?", back: "Corrective action eliminates the cause of an EXISTING nonconformance. Preventive action eliminates the cause of a POTENTIAL nonconformance.", priority: 'high', isNew2022: false },
+  { id: 'c505', moduleId: 'm5', front: "What are the 7 basic quality tools?", back: "Flowchart, Check Sheet, Histogram, Pareto Chart, Cause & Effect (Fishbone), Scatter Diagram, Control Chart.", priority: 'medium', isNew2022: false },
+  { id: 'c506', moduleId: 'm5', front: "What is a Kaizen event?", back: "A focused, short-duration improvement workshop (typically 3-5 days) where a cross-functional team rapidly improves a specific process.", priority: 'medium', isNew2022: false },
+  // Module 6 — Priority
+  { id: 'c601', moduleId: 'm6', front: "What does a p-value tell you?", back: "The probability of observing a result at least this extreme IF the null hypothesis were true. p < 0.05 = reject H₀. It does NOT mean 95% confidence the alternative is true.", priority: 'high', isNew2022: false },
+  { id: 'c602', moduleId: 'm6', front: "Normal vs Binomial vs Poisson — when to use each?", back: "Normal: continuous data, large samples. Binomial: fixed trials, 2 outcomes, constant probability. Poisson: rare events, large n, small p (defects per unit).", priority: 'high', isNew2022: false },
+  { id: 'c603', moduleId: 'm6', front: "Type I vs Type II error?", back: "Type I (α): Rejecting H₀ when it's true (false alarm). Type II (β): Failing to reject H₀ when it's false (missed detection). α = significance level.", priority: 'high', isNew2022: false },
+  { id: 'c604', moduleId: 'm6', front: "How do you interpret a 95% confidence interval?", back: "If we repeated this study many times, 95% of calculated intervals would contain the true population parameter. NOT that there's a 95% chance the true value is in this specific interval.", priority: 'high', isNew2022: false },
+  { id: 'c605', moduleId: 'm6', front: "What is standard deviation?", back: "A measure of spread — the average distance of data points from the mean. σ for population, s for sample. Variance = σ².", priority: 'medium', isNew2022: false },
+  { id: 'c606', moduleId: 'm6', front: "t-test vs z-test — when to use each?", back: "t-test: small sample (n<30) or unknown population σ. z-test: large sample (n≥30) and known population σ.", priority: 'high', isNew2022: false },
+  { id: 'c607', moduleId: 'm6', front: "What is the Central Limit Theorem?", back: "Regardless of population distribution, the sampling distribution of the mean approaches normal as sample size increases (n≥30). Foundation of statistical inference.", priority: 'high', isNew2022: false },
+  { id: 'c608', moduleId: 'm6', front: "Cp formula?", back: "Cp = (USL - LSL) / 6σ. Measures the ratio of specification width to process spread. Does NOT account for centering.", priority: 'high', isNew2022: false },
+  { id: 'c609', moduleId: 'm6', front: "What is a factorial DOE?", back: "An experiment that tests all combinations of factor levels simultaneously. A 2³ design tests 3 factors at 2 levels = 8 runs. Efficient for identifying main effects and interactions.", priority: 'medium', isNew2022: false },
+  { id: 'c610', moduleId: 'm6', front: "What is regression analysis used for?", back: "To model the relationship between a dependent variable (Y) and one or more independent variables (X). R² measures how much variation in Y is explained by X.", priority: 'medium', isNew2022: false },
+  // Module 7
+  { id: 'c701', moduleId: 'm7', front: "RPN calculation?", back: "RPN = Severity × Occurrence × Detection. Scale 1-10 each. Max RPN = 1000. High severity (9-10) requires action regardless of RPN.", priority: 'high', isNew2022: false },
+  { id: 'c702', moduleId: 'm7', front: "What is a cost-benefit analysis (CBA)?", back: "Compares the total expected costs of an action against the total expected benefits. Used to justify quality improvement investments. New in 2022 BoK.", priority: 'high', isNew2022: true },
+  { id: 'c703', moduleId: 'm7', front: "What is HAZOP?", back: "Hazard and Operability Study — a structured risk analysis technique that examines a process for potential hazards and operability problems using guide words (No, More, Less, As Well As, etc.).", priority: 'medium', isNew2022: false },
+  { id: 'c704', moduleId: 'm7', front: "Risk mitigation strategies — 4 types?", back: "Avoid (eliminate the risk), Transfer (insurance/contract), Mitigate (reduce likelihood or impact), Accept (acknowledge and monitor).", priority: 'high', isNew2022: false },
+  { id: 'c705', moduleId: 'm7', front: "What is risk-based thinking in ISO 9001/AS9100?", back: "Proactively identifying risks and opportunities that could affect the ability to meet objectives, and taking action proportional to the potential impact.", priority: 'high', isNew2022: false },
+];
+
+// ── State ────────────────────────────────────────────────────────────
+let progress = {};
+let userStats = { studyStreak: 0, lastStudiedDate: '', totalCardsReviewed: 0, totalSessions: 0 };
+let sessionCards = [];
+let sessionIndex = 0;
+let sessionResults = {};
+let isFlipped = false;
+let lastSessionModuleId = null;
+
+// ── Firebase Listeners ────────────────────────────────────────────────
+onValue(ref(db, 'cqe_progress'), snap => {
+  progress = snap.val() || {};
+  renderHome();
+});
+
+onValue(ref(db, 'cqe_stats'), snap => {
+  if (snap.val()) userStats = snap.val();
+  document.getElementById('streak-display').textContent = '🔥 ' + (userStats.studyStreak || 0) + ' days';
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function getStatus(cardId) { return (progress[cardId] || {}).status || 'unseen'; }
+
+function moduleStats(moduleId) {
+  const cards = CARDS.filter(c => c.moduleId === moduleId);
+  const counts = { known: 0, still_learning: 0, needs_work: 0, unseen: 0 };
+  cards.forEach(c => counts[getStatus(c.id)]++);
+  const mastery = cards.length ? Math.round((counts.known / cards.length) * 100) : 0;
+  return { counts, mastery, total: cards.length };
+}
+
+function overallMastery() {
+  const known = CARDS.filter(c => getStatus(c.id) === 'known').length;
+  return Math.round((known / CARDS.length) * 100);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── Home ──────────────────────────────────────────────────────────────
+function renderHome() {
+  const pct = overallMastery();
+  document.getElementById('overall-pct').textContent = pct + '%';
+  document.getElementById('overall-bar').style.width = pct + '%';
+
+  // Weak button
+  const weakCards = CARDS.filter(c => ['needs_work', 'still_learning', 'unseen'].includes(getStatus(c.id)));
+  const weakBtn = document.getElementById('weak-btn');
+  weakBtn.textContent = weakCards.length > 0
+    ? `📚 Study Weak Cards (${weakCards.length})`
+    : '✓ All cards known!';
+  weakBtn.disabled = weakCards.length === 0;
+
+  // Module grid
+  document.getElementById('module-grid').innerHTML = MODULES.map(m => {
+    const { counts, mastery, total } = moduleStats(m.id);
+    const isPriority = m.priority;
+    const pills = [
+      counts.known > 0 ? `<span class="status-pill known">${counts.known} known</span>` : '',
+      counts.still_learning > 0 ? `<span class="status-pill learning">${counts.still_learning} learning</span>` : '',
+      counts.needs_work > 0 ? `<span class="status-pill needs">${counts.needs_work} needs work</span>` : '',
+    ].filter(Boolean).join('');
+
+    return `
+      <div class="module-card ${isPriority ? 'priority' : ''}" onclick="startModuleSession('${m.id}')">
+        <div class="module-card-top">
+          <div class="module-icon">${m.icon}</div>
+          <div class="module-info">
+            <div class="module-name">${m.name}</div>
+            <div class="module-meta">Domain ${m.domain} · ${m.examQ} exam questions</div>
+          </div>
+          <div class="module-pct ${isPriority ? 'priority' : ''}">${mastery}%</div>
+        </div>
+        <div class="module-bar">
+          <div class="module-bar-fill ${isPriority ? 'priority' : ''}" style="width:${mastery}%"></div>
+        </div>
+        <div class="module-card-footer">
+          <span class="card-count-pill">${total} cards</span>
+          <div class="status-pills">${pills}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Session ───────────────────────────────────────────────────────────
+function startModuleSession(moduleId) {
+  lastSessionModuleId = moduleId;
+  const mod = MODULES.find(m => m.id === moduleId);
+  const cards = shuffle(CARDS.filter(c => c.moduleId === moduleId));
+  beginSession(cards, mod.name);
+}
+window.startModuleSession = startModuleSession;
+
+function startWeakSession() {
+  lastSessionModuleId = null;
+  const needsWork = shuffle(CARDS.filter(c => getStatus(c.id) === 'needs_work'));
+  const learning = shuffle(CARDS.filter(c => getStatus(c.id) === 'still_learning'));
+  const unseen = shuffle(CARDS.filter(c => getStatus(c.id) === 'unseen'));
+  const cards = [...needsWork, ...learning, ...unseen];
+  if (cards.length === 0) return;
+  beginSession(cards, 'Weak Cards');
+}
+window.startWeakSession = startWeakSession;
+
+function beginSession(cards, title) {
+  sessionCards = cards;
+  sessionIndex = 0;
+  sessionResults = { known: 0, still_learning: 0, needs_work: 0 };
+  document.getElementById('session-title').textContent = title;
+  showView('session');
+  renderCard();
+}
+
+function renderCard() {
+  const card = sessionCards[sessionIndex];
+  isFlipped = false;
+  document.getElementById('card-inner').classList.remove('flipped');
+  document.getElementById('action-btns').classList.remove('show');
+  document.getElementById('tap-hint').style.opacity = '1';
+  document.getElementById('session-counter').textContent = `${sessionIndex + 1} / ${sessionCards.length}`;
+
+  // Front
+  document.getElementById('card-front').innerHTML = `
+    <div class="card-label">Question</div>
+    <div class="card-question">${card.front}</div>
+    <div class="card-badges">
+      ${card.isNew2022 ? '<span class="badge new2022">★ New in 2022 BoK</span>' : ''}
+      ${card.priority === 'high' ? '<span class="badge high">High Priority</span>' : ''}
+      ${card.priority === 'medium' ? '<span class="badge medium">Medium</span>' : ''}
+    </div>`;
+
+  // Back
+  document.getElementById('card-back').innerHTML = `
+    <div class="card-label">Answer</div>
+    <div class="card-answer">${card.back}</div>`;
+
+  // Progress dots
+  document.getElementById('progress-dots').innerHTML = sessionCards.map((c, i) => {
+    let cls = '';
+    if (i < sessionIndex) cls = sessionResults[c.id] || '';
+    else if (i === sessionIndex) cls = 'current';
+    return `<div class="progress-dot ${cls}"></div>`;
+  }).join('');
+}
+
+function flipCard() {
+  if (isFlipped) return;
+  isFlipped = true;
+  document.getElementById('card-inner').classList.add('flipped');
+  document.getElementById('action-btns').classList.add('show');
+  document.getElementById('tap-hint').style.opacity = '0';
+}
+window.flipCard = flipCard;
+
+function markCard(status) {
+  const card = sessionCards[sessionIndex];
+  sessionResults[card.id] = status;
+  if (status === 'known') sessionResults.known++;
+  else if (status === 'still_learning') sessionResults.still_learning++;
+  else sessionResults.needs_work++;
+
+  // Save to Firebase
+  const now = Date.now();
+  const prev = progress[card.id] || { timesReviewed: 0, timesCorrect: 0, streak: 0 };
+  const isCorrect = status === 'known';
+  const newStreak = isCorrect ? (prev.streak || 0) + 1 : 0;
+  set(ref(db, 'cqe_progress/' + card.id), {
+    status,
+    timesReviewed: (prev.timesReviewed || 0) + 1,
+    timesCorrect: (prev.timesCorrect || 0) + (isCorrect ? 1 : 0),
+    lastReviewed: now,
+    streak: newStreak,
+  });
+
+  sessionIndex++;
+  if (sessionIndex < sessionCards.length) {
+    renderCard();
+  } else {
+    finishSession();
+  }
+}
+window.markCard = markCard;
+
+function finishSession() {
+  // Update user stats + streak
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const last = userStats.lastStudiedDate;
+  let streak = userStats.studyStreak || 0;
+  if (last === today) { /* already studied today */ }
+  else if (last === yesterday) streak++;
+  else streak = 1;
+
+  const newStats = {
+    studyStreak: streak,
+    lastStudiedDate: today,
+    totalCardsReviewed: (userStats.totalCardsReviewed || 0) + sessionCards.length,
+    totalSessions: (userStats.totalSessions || 0) + 1,
+  };
+  set(ref(db, 'cqe_stats'), newStats);
+
+  // Show summary
+  document.getElementById('sum-known').textContent = sessionResults.known || 0;
+  document.getElementById('sum-learning').textContent = sessionResults.still_learning || 0;
+  document.getElementById('sum-needs').textContent = sessionResults.needs_work || 0;
+  document.getElementById('summary-sub').textContent = `${sessionCards.length} card${sessionCards.length !== 1 ? 's' : ''} reviewed`;
+  const icon = (sessionResults.known || 0) >= sessionCards.length * 0.8 ? '🎉' : (sessionResults.known || 0) >= sessionCards.length * 0.5 ? '💪' : '📖';
+  document.getElementById('summary-icon').textContent = icon;
+  showView('summary');
+}
+
+function studyAgain() {
+  if (lastSessionModuleId) startModuleSession(lastSessionModuleId);
+  else startWeakSession();
+}
+window.studyAgain = studyAgain;
+
+function goHome() {
+  showView('home');
+}
+window.goHome = goHome;
+
+// ── Swipe Gestures ────────────────────────────────────────────────────
+let touchStartX = 0, touchStartY = 0;
+const overlay = document.getElementById('swipe-overlay');
+
+document.getElementById('card-wrapper').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.getElementById('card-wrapper').addEventListener('touchend', e => {
+  if (!isFlipped) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+  if (Math.abs(dx) > 80 && dy < 60) {
+    const direction = dx > 0 ? 'known' : 'needs_work';
+    overlay.className = 'swipe-overlay ' + direction;
+    overlay.style.opacity = '1';
+    setTimeout(() => { overlay.style.opacity = '0'; }, 300);
+    markCard(direction);
+  }
+}, { passive: true });
+
+// ── View Switching ────────────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderHome();
+</script>
+</body>
+</html>
